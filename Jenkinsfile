@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKERHUB_REPO = 'elkuuz/shopping-cart'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+
     options {
         timestamps()
         disableConcurrentBuilds()
@@ -28,6 +33,29 @@ pipeline {
         stage('Verify') {
             steps {
                 sh 'mvn -B verify'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh 'docker build -t ${DOCKERHUB_REPO}:${IMAGE_TAG} -t ${DOCKERHUB_REPO}:latest .'
+            }
+        }
+
+        stage('Docker Push') {
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'master'
+                }
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_TOKEN')]) {
+                    sh 'echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin'
+                    sh 'docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}'
+                    sh 'docker push ${DOCKERHUB_REPO}:latest'
+                    sh 'docker logout'
+                }
             }
         }
     }
