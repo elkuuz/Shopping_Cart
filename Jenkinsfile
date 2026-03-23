@@ -8,8 +8,8 @@ pipeline {
 
     // Update these names to match Jenkins Global Tool Configuration.
     tools {
-        jdk 'jdk21'
-        maven 'maven3'
+        jdk 'JDK21'
+        maven 'Maven'
     }
 
     stages {
