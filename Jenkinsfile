@@ -4,11 +4,14 @@ pipeline {
     environment {
         DOCKERHUB_REPO = 'elkuuz/shopping-cart'
         IMAGE_TAG = "${BUILD_NUMBER}"
+        // Jenkins non-login shells often miss Docker Desktop paths on macOS.
+        PATH = "${env.PATH}:/usr/local/bin:/opt/homebrew/bin:/Applications/Docker.app/Contents/Resources/bin"
     }
 
     options {
         timestamps()
         disableConcurrentBuilds()
+        skipDefaultCheckout(true)
     }
 
     // Update these names to match Jenkins Global Tool Configuration.
@@ -33,6 +36,14 @@ pipeline {
         stage('Verify') {
             steps {
                 sh 'mvn -B verify'
+            }
+        }
+
+        stage('Docker Preflight') {
+            steps {
+                sh 'echo "PATH=$PATH"'
+                sh 'command -v docker'
+                sh 'docker version'
             }
         }
 
