@@ -54,18 +54,18 @@ pipeline {
         }
 
         stage('Docker Push') {
-            when {
-                anyOf {
-                    branch 'main'
-                    branch 'master'
-                }
-            }
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_TOKEN')]) {
-                    sh 'echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin'
-                    sh 'docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}'
-                    sh 'docker push ${DOCKERHUB_REPO}:latest'
-                    sh 'docker logout'
+                script {
+                    if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master') {
+                        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_TOKEN')]) {
+                            sh 'echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USER" --password-stdin'
+                            sh 'docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}'
+                            sh 'docker push ${DOCKERHUB_REPO}:latest'
+                            sh 'docker logout'
+                        }
+                    } else {
+                        echo "Skipping Docker push for branch '${env.BRANCH_NAME}'. Push runs only on main/master."
+                    }
                 }
             }
         }
